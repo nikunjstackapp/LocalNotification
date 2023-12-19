@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:notify_demo_gpt/notify_service.dart';
 
 class NotifyService {
   NotifyService._privateConstructor();
@@ -11,6 +10,9 @@ class NotifyService {
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   late DateTime selectedDateTime;
+  int uniqueChannelID = 0;
+  List<PendingNotificationRequest> pendingNotificationRequests = [];
+
 
   Future<void> initializeNotifications() async {
     selectedDateTime = DateTime.now();
@@ -24,6 +26,7 @@ class NotifyService {
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
     );
+    returnPendingNotifications();
   }
 
   Future<void> onSelectNotification(String? payload) async {
@@ -32,15 +35,17 @@ class NotifyService {
     }
   }
 
-  Future<void> scheduleNotification({String? title, String? body}) async {
+  Future<void> scheduleNotification({Function? setState, String? title, String? body}) async {
     print("send Notify Called");
+    uniqueChannelID = DateTime.now().millisecond;
     final AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
         'sender_channel', 'Sender Channel',
         channelDescription: 'Channel for sender notifications',
         priority: Priority.high,
         importance: Importance.max,
-        enableVibration: true,playSound: true,
-        color: Colors.yellow);
+        enableVibration: true,
+        playSound: true,
+        color: Colors.yellow,sound: RawResourceAndroidNotificationSound('music'));
 
     DarwinNotificationDetails iosNotificationDetails = const DarwinNotificationDetails(
       presentAlert: true,
@@ -56,7 +61,7 @@ class NotifyService {
     print('date time Now --> ${DateTime.now()}');
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
+      uniqueChannelID, //gamme e int api sakvi tamtare//
       title,
       body,
       scheduledTime,
@@ -64,11 +69,24 @@ class NotifyService {
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
+    returnPendingNotifications();
+    setState!(() {});
   }
 
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
     print('Cancel Notification called');
+  }
+
+  Future<void> cancelSingleNotifications(int id, Function setState) async {
+    await flutterLocalNotificationsPlugin.cancel(id);
+    returnPendingNotifications();
+    setState(() {});
+    print('Cancel single Notification called');
+  }
+
+  returnPendingNotifications() async {
+    pendingNotificationRequests = await flutterLocalNotificationsPlugin.pendingNotificationRequests();
   }
 
   Future<void> selectDateTime(BuildContext context) async {
