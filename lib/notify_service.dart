@@ -73,8 +73,10 @@ class NotifyService {
     setState!(() {});
   }
 
-  Future<void> cancelAllNotifications() async {
+  Future<void> cancelAllNotifications(Function setState) async {
     await flutterLocalNotificationsPlugin.cancelAll();
+    returnPendingNotifications();
+    setState(() {});
     print('Cancel Notification called');
   }
 

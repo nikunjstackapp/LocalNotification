@@ -120,7 +120,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Center(
                   child: ElevatedButton(
-                    onPressed: () => NotifyService.instance.cancelAllNotifications(),
+                    onPressed: () => NotifyService.instance.cancelAllNotifications(setState),
                     child: const Text('Cancel All Notification'),
                   ),
                 ),
